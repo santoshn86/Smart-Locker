@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6 text-center">Face Verification</h1>
+        <div class="flex justify-center mb-4">
+            <video id="video" class="rounded-md border" width="640" height="480" autoplay></video>
+        </div>
+        <div class="flex justify-center mb-6">
+            <button id="capture" class="bg-black text-white py-2 px-4 rounded-md hover:bg-gray-600">Verify</button>
+        </div>
+        <canvas id="canvas" width="640" height="480" class="hidden"></canvas>
+        <form id="verificationForm" method="POST" action="{{ url_for('access_locker') }}" enctype="multipart/form-data" class="flex justify-center">
+            <input type="file" id="capturedPhotoInput" name="captured_photo" class="hidden">
+            <input type="hidden" name="user_photo" value="{{ user_photo }}">
+        </form>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const captureButton = document.getElementById('capture');
+        const capturedPhotoInput = document.getElementById('capturedPhotoInput');
+
+        // Access the user's webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: " + err);
+            });
+
+        // Capture the photo when the button is clicked
+        captureButton.addEventListener('click', () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                const file = new File([blob], "captured_photo.png", { type: 'image/png' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                capturedPhotoInput.files = dataTransfer.files;
+                document.getElementById('verificationForm').submit();
+            });
+        });
+    </script>
+</body>
+</html>
